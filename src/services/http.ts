@@ -38,6 +38,15 @@ export const http: AxiosInstance = axios.create({
     Accept: "application/json",
     "X-Requested-With": "XMLHttpRequest",
   },
+  // The API is a different origin (localhost:8000) from the app (localhost:3000),
+  // so axios treats every call as cross-origin. Since axios 1.6 it only reads the
+  // XSRF-TOKEN cookie and sends X-XSRF-TOKEN for same-origin requests, unless
+  // withXSRFToken is set — without it, POST /auth/register fails with
+  // "CSRF token mismatch". Explicitly opt in, and pin the cookie/header names
+  // to Laravel's defaults so this never silently drifts.
+  withXSRFToken: true,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
 });
 
 http.interceptors.request.use((config) => {
