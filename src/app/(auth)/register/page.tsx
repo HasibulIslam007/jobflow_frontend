@@ -20,7 +20,7 @@ import { useRegister } from '@/features/auth/hooks';
 import { ApiError } from '@/lib/api';
 
 /**
- * POST /api/v1/auth/register via Sanctum session cookies.
+ * POST /api/v1/auth/register via a Sanctum personal access token.
  * Sends password_confirmation to satisfy Laravel's `confirmed` rule.
  */
 export default function RegisterPage() {

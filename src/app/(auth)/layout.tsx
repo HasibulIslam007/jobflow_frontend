@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </ul>
         </div>
         <p className="relative text-micro text-muted-foreground">
-          Sanctum session cookies · Laravel 13 API · SOC2-ready pipeline
+          Sanctum bearer tokens · Laravel 13 API · SOC2-ready pipeline
         </p>
       </section>
 

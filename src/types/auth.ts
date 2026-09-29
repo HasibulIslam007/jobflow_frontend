@@ -11,6 +11,7 @@ export type User = {
 };
 
 export type AuthPayload = {
+  token: string;
   user: User;
   authenticated: boolean;
 };

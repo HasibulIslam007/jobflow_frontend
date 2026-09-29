@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { getMe, login, logout, register } from '@/features/auth/auth.service';
-import { ApiError } from '@/lib/api';
+import { ApiError, clearAuthToken, setAuthToken } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import type { LoginInput, RegisterInput } from '@/types/auth';
 
@@ -59,6 +59,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: (input: RegisterInput) => register(input),
     onSuccess: (payload) => {
+      setAuthToken(payload.token);
       setUser(payload.user);
       queryClient.setQueryData(sessionQueryKey, payload.user);
       toast.success('Account created — welcome to JobFlow AI.');
@@ -78,6 +79,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (input: LoginInput) => login(input),
     onSuccess: (payload) => {
+      setAuthToken(payload.token);
       setUser(payload.user);
       queryClient.setQueryData(sessionQueryKey, payload.user);
       toast.success('Welcome back.');
@@ -97,12 +99,15 @@ export function useLogout() {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
+      clearAuthToken();
       clearUser();
       queryClient.removeQueries({ queryKey: sessionQueryKey });
       toast.success('Signed out.');
       router.push('/login');
     },
     onError: (error: unknown) => {
+      clearAuthToken();
+      clearUser();
       toast.error(resolveErrorMessage(error, 'Logout failed.'));
     },
   });

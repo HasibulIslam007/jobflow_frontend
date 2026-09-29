@@ -1,4 +1,4 @@
-import { ensureCsrfCookie, http } from '@/lib/api';
+import { http } from '@/lib/api';
 import type { ApiEnvelope } from '@/types/api';
 import type {
   AuthPayload,
@@ -9,13 +9,11 @@ import type {
 } from '@/types/auth';
 
 /**
- * Authentication service — thin wrappers over the Laravel Sanctum SPA
- * endpoints. Every mutating call bootstraps the CSRF cookie first;
- * `http` already sends `withCredentials` + X-XSRF-TOKEN automatically.
+ * Authentication service — thin wrappers over Laravel Sanctum personal
+ * access-token endpoints.
  */
 
 export async function register(input: RegisterInput): Promise<AuthPayload> {
-  await ensureCsrfCookie();
   const { data } = await http.post<ApiEnvelope<AuthPayload>>(
     '/auth/register',
     input,
@@ -25,7 +23,6 @@ export async function register(input: RegisterInput): Promise<AuthPayload> {
 }
 
 export async function login(input: LoginInput): Promise<AuthPayload> {
-  await ensureCsrfCookie();
   const { data } = await http.post<ApiEnvelope<AuthPayload>>(
     '/auth/login',
     input,

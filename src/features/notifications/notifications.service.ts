@@ -1,4 +1,4 @@
-import { ensureCsrfCookie, http } from '@/lib/api';
+import { http } from '@/lib/api';
 import type { ApiEnvelope } from '@/types/api';
 import type {
   MarkAllReadResponse,
@@ -44,8 +44,6 @@ export async function getUnreadCount(): Promise<number> {
 export async function markNotificationRead(
   id: number,
 ): Promise<MarkReadResponse> {
-  await ensureCsrfCookie();
-
   const { data } = await http.patch<ApiEnvelope<MarkReadResponse>>(
     `/notifications/${id}/read`,
   );
@@ -54,8 +52,6 @@ export async function markNotificationRead(
 }
 
 export async function markAllNotificationsRead(): Promise<MarkAllReadResponse> {
-  await ensureCsrfCookie();
-
   const { data } = await http.patch<ApiEnvelope<MarkAllReadResponse>>(
     '/notifications/read-all',
   );
@@ -64,8 +60,6 @@ export async function markAllNotificationsRead(): Promise<MarkAllReadResponse> {
 }
 
 export async function deleteNotification(id: number): Promise<void> {
-  await ensureCsrfCookie();
-
   await http.delete(`/notifications/${id}`);
 }
 
@@ -77,8 +71,6 @@ export async function saveJobReminder(
   jobId: number,
   notificationDays: number,
 ): Promise<SaveReminderResult> {
-  await ensureCsrfCookie();
-
   const { data } = await http.post<ApiEnvelope<SaveReminderResult>>(
     `/jobs/${jobId}/reminders`,
     { notification_days: notificationDays },

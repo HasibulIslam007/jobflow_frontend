@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
 import { useSession } from '@/features/auth/hooks';
+import { clearAuthToken } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
 /**
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleUnauthenticated = () => {
+      clearAuthToken();
       clearUser();
       toast.error('Your session expired. Please sign in again.');
     };

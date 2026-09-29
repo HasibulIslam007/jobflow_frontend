@@ -1,4 +1,4 @@
-import { ensureCsrfCookie, http } from '@/lib/api';
+import { http } from '@/lib/api';
 import type { ApiEnvelope } from '@/types/api';
 import type {
   AiSettings,
@@ -28,8 +28,6 @@ export async function getAiSettings(): Promise<AiSettings> {
 export async function updateAiSettings(
   input: UpdateAiSettingsInput,
 ): Promise<AiSettings> {
-  await ensureCsrfCookie();
-
   const { data } = await http.put<ApiEnvelope<AiSettings>>('/settings/ai', input);
 
   return data.data;
@@ -38,8 +36,6 @@ export async function updateAiSettings(
 export async function testAiKey(
   input: TestAiKeyInput = {},
 ): Promise<TestAiKeyResult> {
-  await ensureCsrfCookie();
-
   const { data } = await http.post<ApiEnvelope<TestAiKeyResult>>(
     '/settings/ai/test',
     input,
@@ -49,8 +45,6 @@ export async function testAiKey(
 }
 
 export async function deleteAiKey(): Promise<DeleteAiKeyResult> {
-  await ensureCsrfCookie();
-
   const { data } = await http.delete<ApiEnvelope<DeleteAiKeyResult>>(
     '/settings/ai/gemini',
   );

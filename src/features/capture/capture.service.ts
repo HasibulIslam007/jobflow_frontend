@@ -1,4 +1,4 @@
-import { ensureCsrfCookie, http } from '@/lib/api';
+import { http } from '@/lib/api';
 import { AI_REQUEST_TIMEOUT_MS } from '@/services/http';
 import type { ApiEnvelope } from '@/types/api';
 import type { Job } from '@/features/jobs/types';
@@ -30,7 +30,6 @@ function toResult(data: CaptureEnvelope): CaptureResult {
 }
 
 export async function createTextCapture(content: string): Promise<CaptureResult> {
-  await ensureCsrfCookie();
   const { data } = await http.post<CaptureEnvelope>(
     '/job-captures',
     {
@@ -44,7 +43,6 @@ export async function createTextCapture(content: string): Promise<CaptureResult>
 }
 
 export async function createUrlCapture(url: string): Promise<CaptureResult> {
-  await ensureCsrfCookie();
   const { data } = await http.post<CaptureEnvelope>(
     '/job-captures',
     {
@@ -62,7 +60,6 @@ export async function createFileCapture(
   file: File,
   onUploadProgress?: (percent: number) => void,
 ): Promise<CaptureResult> {
-  await ensureCsrfCookie();
 
   const form = new FormData();
   form.append('type', type);

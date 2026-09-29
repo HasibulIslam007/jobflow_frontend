@@ -74,7 +74,7 @@ src/
 2. **No hardcoded data.** Every screen reads from a real endpoint — mocks belong to tests only.
 3. **One HTTP client.** All API access goes through `src/services/*`; components never call `axios` directly.
 4. **Errors** are `ApiError` instances with a machine-readable `code`; components branch on `code`, never on message text.
-5. **Auth-ready:** `withCredentials` + automatic `X-XSRF-TOKEN` from the Sanctum cookie; `ensureCsrfCookie()` is called before the first mutating request (Phase 1).
+5. **Auth-ready:** Sanctum personal access tokens are stored in browser `localStorage` and attached as `Authorization: Bearer <token>` by the shared Axios client.
 6. **Correlation:** every request sends `X-Request-Id`, echoed by the API for support/observability.
 
 ## CI

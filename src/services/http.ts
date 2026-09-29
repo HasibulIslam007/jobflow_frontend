@@ -23,31 +23,39 @@ export class ApiError extends Error {
 }
 
 /**
- * Single Axios instance for the Laravel API.
- *
- * - `withCredentials` sends the Sanctum session cookie (SPA cookie auth).
- * - Axios reads the `XSRF-TOKEN` cookie and sends `X-XSRF-TOKEN` automatically
- *   once `ensureCsrfCookie()` has been called before a mutating request.
- * - `X-Request-Id` correlates browser requests with API logs (docs/02-architecture.md §9).
+ * Single Axios instance for the Laravel API. Authentication is carried in a
+ * Sanctum personal access token stored locally in the browser.
  */
 export const http: AxiosInstance = axios.create({
   baseURL: `${env.apiUrl}/api/v1`,
-  withCredentials: true,
   timeout: 20_000,
   headers: {
     Accept: "application/json",
     "X-Requested-With": "XMLHttpRequest",
   },
-  // The API is a different origin (localhost:8000) from the app (localhost:3000),
-  // so axios treats every call as cross-origin. Since axios 1.6 it only reads the
-  // XSRF-TOKEN cookie and sends X-XSRF-TOKEN for same-origin requests, unless
-  // withXSRFToken is set — without it, POST /auth/register fails with
-  // "CSRF token mismatch". Explicitly opt in, and pin the cookie/header names
-  // to Laravel's defaults so this never silently drifts.
-  withXSRFToken: true,
-  xsrfCookieName: "XSRF-TOKEN",
-  xsrfHeaderName: "X-XSRF-TOKEN",
 });
+
+const AUTH_TOKEN_STORAGE_KEY = "jobflow.access_token";
+
+function getStoredToken(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+export function setAuthToken(token: string): void {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+  }
+}
+
+export function clearAuthToken(): void {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  }
+}
 
 /**
  * Per-request timeout for calls that make the server wait on an AI provider.
@@ -69,6 +77,12 @@ export const http: AxiosInstance = axios.create({
 export const AI_REQUEST_TIMEOUT_MS = 120_000;
 
 http.interceptors.request.use((config) => {
+  const token = getStoredToken();
+
+  if (token) {
+    config.headers.set("Authorization", `Bearer ${token}`);
+  }
+
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     config.headers.set("X-Request-Id", crypto.randomUUID());
   }
@@ -90,13 +104,18 @@ http.interceptors.response.use(
       payload?.meta?.request_id,
     );
 
-    // `/auth/me` returns 401 for an expected guest session, and login can
-    // return 401 for invalid credentials. Only protected API requests signal
-    // that an already-authenticated session expired.
+    // An anonymous /auth/me probe is expected to return 401. A stored token
+    // turning 401 is different: it is an expired or revoked session.
     const requestUrl = error.config?.url ?? "";
     const isAuthRequest = requestUrl.startsWith("/auth/");
+    const isSessionProbe = requestUrl === "/auth/me";
 
-    if (status === 401 && !isAuthRequest && typeof window !== "undefined") {
+    if (
+      status === 401 &&
+      (!isAuthRequest || isSessionProbe) &&
+      getStoredToken() &&
+      typeof window !== "undefined"
+    ) {
       window.dispatchEvent(new CustomEvent("jobflow:unauthenticated"));
     }
 
@@ -104,10 +123,3 @@ http.interceptors.response.use(
   },
 );
 
-/**
- * Bootstrap the Sanctum CSRF cookie. Call once before the first mutating
- * request of a session (login, register, password reset).
- */
-export async function ensureCsrfCookie(): Promise<void> {
-  await axios.get(`${env.apiUrl}/sanctum/csrf-cookie`, { withCredentials: true });
-}

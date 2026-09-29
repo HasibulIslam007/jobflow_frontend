@@ -21,7 +21,7 @@ import { useLogin } from '@/features/auth/hooks';
 import { ApiError } from '@/lib/api';
 
 /**
- * POST /api/v1/auth/login via Sanctum session cookies.
+ * POST /api/v1/auth/login via a Sanctum personal access token.
  * Field errors come from ApiError.errors (validation_failed);
  * wrong credentials surface as the `email` field error per Laravel.
  */

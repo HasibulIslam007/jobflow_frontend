@@ -1,4 +1,4 @@
-import { ensureCsrfCookie, http } from '@/lib/api';
+import { http } from '@/lib/api';
 import { AI_REQUEST_TIMEOUT_MS } from '@/services/http';
 import type { ApiEnvelope } from '@/types/api';
 import type { Resume, ResumeMatch } from '@/features/resume/types';
@@ -39,8 +39,6 @@ export async function uploadResume(
   title?: string,
   onUploadProgress?: (percent: number) => void,
 ): Promise<UploadResumeResult> {
-  await ensureCsrfCookie();
-
   const form = new FormData();
   form.append('file', file, file.name);
   if (title) {
@@ -65,8 +63,6 @@ export async function matchResumeToJob(
   jobId: number,
   resumeId: number,
 ): Promise<ResumeMatch> {
-  await ensureCsrfCookie();
-
   const { data } = await http.post<ApiEnvelope<ResumeMatch>>(
     `/jobs/${jobId}/match-resume/${resumeId}`,
     undefined,

@@ -7,9 +7,8 @@ import { PageLoading } from '@/components/loading';
 import { useAuthStore } from '@/stores/auth-store';
 
 /**
- * Client-side route gate. Server middleware cannot validate the user
- * (the Sanctum session cookie is HttpOnly + encrypted), so protection
- * happens here after session hydration.
+ * Client-side route gate. Server middleware cannot validate the browser's
+ * bearer token, so protection happens here after session hydration.
  *
  * Guests are redirected to /login?next=<path>; while the session
  * resolves a loading screen is shown instead of flashing content.
