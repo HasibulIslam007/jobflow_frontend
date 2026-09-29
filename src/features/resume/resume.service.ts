@@ -1,4 +1,5 @@
 import { ensureCsrfCookie, http } from '@/lib/api';
+import { AI_REQUEST_TIMEOUT_MS } from '@/services/http';
 import type { ApiEnvelope } from '@/types/api';
 import type { Resume, ResumeMatch } from '@/features/resume/types';
 
@@ -48,6 +49,8 @@ export async function uploadResume(
 
   const { data } = await http.post<ResumeEnvelope>('/resumes', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    // Upload plus a full resume extraction/analysis on the server.
+    timeout: AI_REQUEST_TIMEOUT_MS,
     onUploadProgress: (event) => {
       if (event.total && onUploadProgress) {
         onUploadProgress(Math.round((event.loaded / event.total) * 100));
@@ -66,6 +69,8 @@ export async function matchResumeToJob(
 
   const { data } = await http.post<ApiEnvelope<ResumeMatch>>(
     `/jobs/${jobId}/match-resume/${resumeId}`,
+    undefined,
+    { timeout: AI_REQUEST_TIMEOUT_MS },
   );
 
   return data.data;

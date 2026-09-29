@@ -49,6 +49,25 @@ export const http: AxiosInstance = axios.create({
   xsrfHeaderName: "X-XSRF-TOKEN",
 });
 
+/**
+ * Per-request timeout for calls that make the server wait on an AI provider.
+ *
+ * The instance default (20s) is right for ordinary CRUD: failing fast is
+ * better than leaving a spinner. It is wrong for AI work, where the server
+ * legitimately blocks. A text-layer-less PDF costs TWO round trips — a vision
+ * read (OCR_TIMEOUT, default 60s) then a structured extraction
+ * (AI_TIMEOUT, default 30s) — so a realistic worst case is ~90s.
+ *
+ * Without this the browser aborts at 20s while the server keeps working: the
+ * user sees a network error for a job that may still be created a second
+ * later, and the AI quota is spent on a response nobody reads.
+ *
+ * 120s is the ceiling, not the expectation: the two provider timeouts plus
+ * upload time still bound the request server-side, so this only has to sit
+ * above them.
+ */
+export const AI_REQUEST_TIMEOUT_MS = 120_000;
+
 http.interceptors.request.use((config) => {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     config.headers.set("X-Request-Id", crypto.randomUUID());

@@ -1,35 +1,39 @@
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /**
- * Skeleton mirrors: card grid (list), Kanban columns (board),
- * full detail layout (details). One module, three shapes.
+ * Skeletons mirror the real surfaces — card, dense table, board and detail
+ * — so nothing shifts when the data lands. Each is `aria-hidden` and built
+ * from the same padding and heights as its real counterpart.
  */
-export function JobCardSkeleton() {
-  return (
-    <Card size="sm" className="shadow-sm" aria-hidden="true">
-      <CardHeader className="gap-2">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-4 w-3/4" />
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Skeleton className="h-3 w-1/2" />
-        <Skeleton className="h-3 w-2/3" />
-        <div className="flex gap-1">
-          <Skeleton className="h-5 w-14 rounded-full" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
-export function JobListSkeleton({ count = 6 }: { count?: number }) {
+/** Mirrors the compact ATS-style card used by the board and mobile list. */
+export function JobCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
+      className="flex flex-col gap-2.5 rounded-xl border border-border bg-card p-3"
     >
+      <div className="flex items-start gap-2.5">
+        <Skeleton className="size-8 shrink-0 rounded-lg" />
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3.5 w-4/5" />
+        </div>
+      </div>
+      <Skeleton className="h-3 w-1/2" />
+      <Skeleton className="h-4 w-20 rounded-full" />
+      <div className="flex items-center gap-3 border-t border-border/60 pt-2">
+        <Skeleton className="h-3 w-12" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+    </div>
+  );
+}
+
+/** Mirrors the mobile card list rendered by `JobTable` below `md`. */
+export function JobListSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="space-y-2.5">
       {Array.from({ length: count }).map((_, index) => (
         <JobCardSkeleton key={index} />
       ))}
@@ -37,12 +41,58 @@ export function JobListSkeleton({ count = 6 }: { count?: number }) {
   );
 }
 
+/**
+ * Mirrors the desktop table: a header strip plus evenly sized rows, so the
+ * page height barely moves between the loading and loaded states.
+ */
+export function JobTableSkeleton({ rows = 8 }: { rows?: number }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="hidden overflow-hidden rounded-xl border border-border md:block"
+    >
+      <div className="flex items-center gap-4 border-b border-border bg-surface/60 px-3 py-2.5">
+        <Skeleton className="h-3 w-14" />
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-12" />
+        <Skeleton className="h-3 w-14" />
+        <Skeleton className="h-3 w-12" />
+      </div>
+
+      <div className="divide-y divide-border">
+        {Array.from({ length: rows }).map((_, index) => (
+          <div key={index} className="flex items-center gap-4 px-3 py-3">
+            <div className="w-[15rem] space-y-1.5">
+              <Skeleton className="h-3.5 w-3/4" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-4 w-20 rounded-full" />
+            <Skeleton className="h-3 w-10" />
+            <Skeleton className="ml-auto h-8 w-32 rounded-xl" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function JobBoardSkeleton() {
   return (
-    <div aria-hidden="true" className="grid grid-flow-col gap-3 overflow-x-auto pb-2 auto-cols-[16rem]">
+    <div
+      aria-hidden="true"
+      className="flex gap-3 overflow-x-auto pb-2"
+    >
       {Array.from({ length: 6 }).map((_, column) => (
-        <div key={column} className="space-y-3">
-          <Skeleton className="h-6 w-24" />
+        <div
+          key={column}
+          className="flex w-[17rem] shrink-0 flex-col gap-2 rounded-xl border border-border/70 bg-surface/50 p-2"
+        >
+          <div className="flex items-center justify-between px-1 pb-0.5">
+            <Skeleton className="h-3.5 w-20" />
+            <Skeleton className="h-4 w-6 rounded-full" />
+          </div>
           <JobCardSkeleton />
           <JobCardSkeleton />
         </div>

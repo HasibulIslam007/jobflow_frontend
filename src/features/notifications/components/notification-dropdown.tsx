@@ -1,19 +1,26 @@
 'use client';
 
+import Link from 'next/link';
 import { BellOffIcon, RefreshCwIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NotificationCard } from '@/features/notifications/components/notification-card';
-import { useNotifications } from '@/features/notifications/hooks';
+import {
+  useMarkAllNotificationsRead,
+  useNotifications,
+} from '@/features/notifications/hooks';
 import { ApiError } from '@/lib/api';
 
 /**
  * Dropdown panel opened by the header bell: latest notifications newest
- * first, unread badge in the header, loading/error/empty states inline.
+ * first, unread badge in the header, loading/error/empty states inline, and a
+ * footer that either opens the full page or clears the badge. Both actions hit
+ * the real API — no local-only state.
  */
 export function NotificationDropdown({ onClose }: { onClose: () => void }) {
   const { data, isPending, isError, error, refetch } = useNotifications();
+  const markAll = useMarkAllNotificationsRead();
 
   const errorMessage =
     error instanceof ApiError
@@ -89,14 +96,25 @@ export function NotificationDropdown({ onClose }: { onClose: () => void }) {
       </div>
 
       {data && data.notifications.length > 0 && (
-        <div className="border-t border-border px-4 py-2.5">
+        <div className="flex items-center gap-1 border-t border-border px-2 py-2">
           <Button
             variant="ghost"
             size="sm"
-            className="w-full text-muted-foreground"
+            className="text-muted-foreground"
+            render={<Link href="/notifications" />}
+            nativeButton={false}
             onClick={onClose}
           >
-            Close
+            View all
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-muted-foreground"
+            onClick={() => markAll.mutate()}
+            disabled={markAll.isPending || data.unread_count === 0}
+          >
+            Mark all read
           </Button>
         </div>
       )}

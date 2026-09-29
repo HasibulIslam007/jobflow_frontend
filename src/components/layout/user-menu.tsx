@@ -3,6 +3,7 @@
 import {
   LogOutIcon,
   SettingsIcon,
+  SparklesIcon,
   UserIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -155,14 +156,16 @@ type MenuAction = {
 /**
  * Account dropdown in the topbar.
  *
- * Profile and Settings are intentionally inert for now — they render as
- * disabled rows with a "Soon" chip rather than dead links.
+ * AI Settings is a live route (Phase 7 BYOK). Profile and the remaining
+ * Settings surface are still inert — they render as disabled rows with a
+ * "Soon" chip rather than dead links.
  */
 function UserMenu() {
   const user = useAuthStore((state) => state.user);
   const { mutate: signOut, isPending } = useLogout();
 
   const actions: MenuAction[] = [
+    { label: 'AI Settings', icon: SparklesIcon, href: '/settings/ai' },
     { label: 'Profile', icon: UserIcon, href: undefined, badge: 'Soon' },
     { label: 'Settings', icon: SettingsIcon, href: undefined, badge: 'Soon' },
   ];

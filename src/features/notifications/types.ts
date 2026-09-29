@@ -5,12 +5,28 @@
  */
 
 export const NOTIFICATION_TYPES = [
+  // Phase 5.7
   'deadline_reminder',
   'application_update',
   'system',
+  // Phase 6.9 — produced by the notification generators from real activity.
+  'follow_up',
+  'interview',
+  'resume',
+  'ai_insight',
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+/** Phase 6.9 generator types, grouped for the notification page's filters. */
+export const INSIGHT_NOTIFICATION_TYPES = [
+  'ai_insight',
+  'resume',
+] as const satisfies readonly NotificationType[];
+
+export const DEADLINE_NOTIFICATION_TYPES = [
+  'deadline_reminder',
+] as const satisfies readonly NotificationType[];
 
 /** GET /api/v1/notifications → data.notifications[] (NotificationResource). */
 export type AppNotification = {
@@ -18,6 +34,10 @@ export type AppNotification = {
   type: NotificationType;
   title: string;
   message: string;
+  /** Frontend route the bell deep-links to; null when there is nowhere to go. */
+  action_url: string | null;
+  /** Structured context from the generator, e.g. { job_id, days_left }. */
+  data: Record<string, unknown>;
   read_at: string | null;
   created_at: string;
 };
@@ -28,9 +48,22 @@ export type NotificationsResponse = {
   unread_count: number;
 };
 
+/** GET /api/v1/notifications/unread-count. */
+export type UnreadCountResponse = {
+  unread_count: number;
+};
+
 /** PATCH /notifications/{id}/read response. */
 export type MarkReadResponse = {
   notification: AppNotification;
+  unread_count: number;
+};
+
+/** PATCH /notifications/read-all response. */
+export type MarkAllReadResponse = {
+  message: string;
+  /** Rows actually changed — 0 is a legitimate "nothing was unread" answer. */
+  marked: number;
   unread_count: number;
 };
 

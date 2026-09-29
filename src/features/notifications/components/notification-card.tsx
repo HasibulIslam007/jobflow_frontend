@@ -1,11 +1,15 @@
 'use client';
 
 import {
+  CalendarClockIcon,
   CheckIcon,
   FileTextIcon,
   FlameIcon,
   InfoIcon,
   Loader2Icon,
+  MailIcon,
+  SparklesIcon,
+  UsersIcon,
   XIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -18,6 +22,12 @@ import {
 import type { AppNotification, NotificationType } from '@/features/notifications/types';
 import { cn } from 'cn';
 
+/**
+ * Typed as a total Record over NotificationType on purpose: adding a new type
+ * on the backend makes this fail to compile here, which is exactly when an
+ * icon decision should be forced — rather than rendering an undefined icon at
+ * runtime for every new notification the generators start producing.
+ */
 const TYPE_META: Record<
   NotificationType,
   { icon: LucideIcon; tint: string }
@@ -25,6 +35,11 @@ const TYPE_META: Record<
   deadline_reminder: { icon: FlameIcon, tint: 'text-orange-500' },
   application_update: { icon: FileTextIcon, tint: 'text-emerald-600 dark:text-emerald-400' },
   system: { icon: InfoIcon, tint: 'text-indigo-500' },
+  // Phase 6.9 generator types.
+  follow_up: { icon: MailIcon, tint: 'text-sky-500' },
+  interview: { icon: UsersIcon, tint: 'text-violet-500' },
+  resume: { icon: CalendarClockIcon, tint: 'text-amber-500' },
+  ai_insight: { icon: SparklesIcon, tint: 'text-ai' },
 };
 
 /** "2h ago" style relative label with an absolute title for hovering. */

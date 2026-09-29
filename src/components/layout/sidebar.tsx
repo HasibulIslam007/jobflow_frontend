@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BarChart3Icon,
+  BellIcon,
   BriefcaseIcon,
   FileTextIcon,
+  KanbanSquareIcon,
   LayoutDashboardIcon,
   PlusIcon,
   SettingsIcon,
+  SparklesIcon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -41,12 +44,26 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboardIcon, match: 'exact' },
   { label: 'My Jobs', href: '/jobs', icon: BriefcaseIcon, match: 'prefix' },
   { label: 'Add Job', href: '/jobs/create', icon: PlusIcon, match: 'exact' },
+  { label: 'Applications', href: '/applications', icon: KanbanSquareIcon, match: 'exact' },
+  { label: 'Notifications', href: '/notifications', icon: BellIcon, match: 'exact' },
+  { label: 'Analytics', href: '/analytics', icon: BarChart3Icon, match: 'exact' },
   { label: 'Resume', href: '/resume', icon: FileTextIcon, match: 'prefix' },
 ];
 
 export const UPCOMING_NAV_ITEMS: NavItem[] = [
-  { label: 'Analytics', icon: BarChart3Icon, badge: 'Soon' },
   { label: 'Settings', icon: SettingsIcon, badge: 'Soon' },
+];
+
+/**
+ * Secondary destinations that are real routes but do not belong in the main
+ * rail. Rendered by the user menu so the sidebar keeps its shape.
+ *
+ * AI Settings is listed here rather than promoted into NAV_ITEMS: it is a
+ * setting, not a destination people visit daily, and the rail is already
+ * carrying the primary workflow.
+ */
+export const ACCOUNT_NAV_ITEMS: NavItem[] = [
+  { label: 'AI Settings', href: '/settings/ai', icon: SparklesIcon, match: 'exact' },
 ];
 
 export function isNavItemActive(pathname: string, item: NavItem): boolean {

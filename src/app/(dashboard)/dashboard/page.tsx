@@ -1,46 +1,47 @@
 'use client';
 
-import { LogOutIcon, RefreshCwIcon } from 'lucide-react';
-
-import { ButtonSpinner } from '@/components/loading';
-import { PageHeader } from '@/components/ui/page-header';
-import { ErrorState } from '@/components/ui/empty-state';
+import {
+  AiCareerInsight,
+  AiCareerInsightSkeleton,
+} from '@/features/dashboard/components/ai-career-insight';
+import { CareerMetrics, CareerMetricsSkeleton } from '@/features/dashboard/components/career-metrics';
+import {
+  CareerScoreCard,
+  CareerScoreCardSkeleton,
+} from '@/features/dashboard/components/career-score-card';
+import { DashboardActions } from '@/features/dashboard/components/dashboard-actions';
+import { DashboardHeader } from '@/features/dashboard/components/dashboard-header';
+import {
+  DeadlineTimeline,
+  DeadlineTimelineSkeleton,
+} from '@/features/dashboard/components/deadline-timeline';
+import {
+  RecentActivity,
+  RecentActivitySkeleton,
+} from '@/features/dashboard/components/recent-activity';
+import { useDashboard } from '@/features/dashboard/hooks';
 import { Button } from '@/components/ui/button';
-import { useLogout } from '@/features/auth/hooks';
+import { ErrorState } from '@/components/ui/empty-state';
+import { RefreshCwIcon } from 'lucide-react';
+import { FadeIn } from '@/components/ui/motion';
 import { useAuthStore } from '@/stores/auth-store';
 import { ApiError } from '@/lib/api';
-import {
-  AiInsightCard,
-  AiInsightCardSkeleton,
-} from '@/features/dashboard/components/ai-insight-card';
-import {
-  CaptureCard,
-  CaptureCardSkeleton,
-} from '@/features/dashboard/components/capture-card';
-import {
-  DeadlineCard,
-  DeadlineCardSkeleton,
-} from '@/features/dashboard/components/deadline-card';
-import { QuickActions } from '@/features/dashboard/components/quick-actions';
-import {
-  StatsGrid,
-  StatsGridSkeleton,
-} from '@/features/dashboard/components/stats-card';
-import {
-  UpcomingActionsCard,
-  UpcomingActionsCardSkeleton,
-} from '@/features/dashboard/components/upcoming-actions-card';
-import { useDashboard } from '@/features/dashboard/hooks';
-import { NotificationBell } from '@/features/notifications/components/notification-bell';
 
 /**
- * First real product screen: pipeline stats, deadline focus,
- * capture activity and AI health — all from GET /api/v1/dashboard.
- * Skeleton → data → error/empty states; manual refresh always available.
+ * AI Career Command Center.
+ *
+ * One aggregate request (GET /api/v1/dashboard) drives the whole screen;
+ * the hook is unchanged. Layout intent, reading top to bottom:
+ *   1. where am I (header)   2. how big is the pipeline (metrics)
+ *   3. what is about to bite (deadlines + health)
+ *   4. what has AI been doing (activity + insight)
+ *   5. what can I do next (actions)
+ *
+ * Session actions (sign out) and notifications are owned by the app shell
+ * and are intentionally not repeated here.
  */
 function DashboardContent() {
   const user = useAuthStore((state) => state.user);
-  const { mutate: signOut, isPending: isSigningOut } = useLogout();
   const {
     data,
     isPending,
@@ -59,49 +60,27 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        eyebrow="JobFlow AI · Dashboard"
-        title={
-          <>
-            Good day{user?.name ? `, ${user.name.split(' ')[0]}` : ''}.
-          </>
-        }
-        description="Here's what needs your attention."
-        actions={
-          <>
-            <NotificationBell />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isPending || isFetching}
-            >
-              <RefreshCwIcon className={isFetching ? 'animate-spin' : ''} />
-              Refresh
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut()}
-              disabled={isSigningOut}
-            >
-              {isSigningOut ? <ButtonSpinner /> : <LogOutIcon />}
-              Sign out
-            </Button>
-          </>
-        }
+      <DashboardHeader
+        name={user?.name ?? null}
+        isRefreshing={isFetching}
+        onRefresh={() => refetch()}
+        disabled={isPending || isFetching}
       />
 
       {isPending ? (
         <>
-          <StatsGridSkeleton />
-          <div className="grid gap-6 lg:grid-cols-2">
-            <DeadlineCardSkeleton />
-            <CaptureCardSkeleton />
+          <CareerMetricsSkeleton />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <DeadlineTimelineSkeleton />
+            </div>
+            <CareerScoreCardSkeleton />
           </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <UpcomingActionsCardSkeleton />
-            <AiInsightCardSkeleton />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <RecentActivitySkeleton />
+            </div>
+            <AiCareerInsightSkeleton />
           </div>
         </>
       ) : isError || !data ? (
@@ -117,19 +96,29 @@ function DashboardContent() {
         />
       ) : (
         <>
-          <StatsGrid stats={data.stats} />
-          <QuickActions />
-          <div className="grid gap-6 lg:grid-cols-2">
-            <DeadlineCard deadlines={data.upcoming_deadlines} />
-            <CaptureCard captures={data.recent_captures} />
+          <CareerMetrics stats={data.stats} />
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <FadeIn className="lg:col-span-2">
+              <DeadlineTimeline deadlines={data.upcoming_deadlines} />
+            </FadeIn>
+            <FadeIn delay={0.05}>
+              <CareerScoreCard insights={data.ai_insights} />
+            </FadeIn>
           </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <UpcomingActionsCard
-              deadlines={data.upcoming_deadlines}
-              interviewCount={data.stats.interview}
-            />
-            <AiInsightCard insights={data.ai_insights} />
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <FadeIn className="lg:col-span-2">
+              <RecentActivity captures={data.recent_captures} />
+            </FadeIn>
+            <FadeIn delay={0.05}>
+              <AiCareerInsight insights={data.ai_insights} />
+            </FadeIn>
           </div>
+
+          <FadeIn delay={0.05}>
+            <DashboardActions />
+          </FadeIn>
         </>
       )}
     </div>
@@ -139,4 +128,5 @@ function DashboardContent() {
 export default function DashboardPage() {
   return <DashboardContent />;
 }
+
 

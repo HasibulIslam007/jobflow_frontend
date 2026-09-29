@@ -12,9 +12,8 @@ import { formatConfidence } from '@/features/jobs/components/job-card';
 import type { Job } from '@/features/jobs/types';
 
 /**
- * Right column: skills + AI analysis. Applications/Reminders were moved
- * out in Phase 5.5 — applications render as the ApplicationPanel in the
- * main column and reminders via ReminderCard below this sidebar.
+ * Right column: skills + AI analysis. Applications render as the
+ * ApplicationIntelligenceCard in the main column, reminders via ReminderCard.
  */
 export function JobDetailsSide({ job }: { job: Job }) {
   return (

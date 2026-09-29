@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import { ApplicationPanel } from '@/features/applications/components/application-panel';
+import { ApplicationIntelligenceCard } from '@/features/applications/components/application-intelligence-card';
 import { ReminderCard } from '@/features/applications/components/reminder-card';
 import { JobDetailsHeader } from '@/features/jobs/components/job-details-header';
 import { JobDetailsMain } from '@/features/jobs/components/job-details-main';
@@ -32,8 +32,8 @@ function errorMessageFor(error: unknown): string {
 /**
  * /jobs/[id] — full detail: header (title/company/status selector/delete)
  * plus Job Information / Description / Skills / AI Analysis sections, the
- * Application Tracking panel (status, timeline, notes), the AI Resume
- * Match card and the read-only reminder card in the right column.
+ * Application Intelligence card (state, timeline preview, pipeline link),
+ * the AI Resume Match card and the read-only reminder card.
  */
 function JobDetailsContent({ id }: { id: number }) {
   const { data: job, isPending, isError, error, refetch } = useJob(id);
@@ -61,7 +61,7 @@ function JobDetailsContent({ id }: { id: number }) {
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div className="flex min-w-0 flex-col gap-6">
           <JobDetailsMain job={job} />
-          <ApplicationPanel job={job} />
+          <ApplicationIntelligenceCard job={job} />
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <JobDetailsSide job={job} />

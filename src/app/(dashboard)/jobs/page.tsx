@@ -1,20 +1,45 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { RefreshCwIcon } from 'lucide-react';
 
-import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/empty-state';
-import { JobEmpty } from '@/features/jobs/components/job-empty';
+import { FadeIn } from '@/components/ui/motion';
+import { useDashboard } from '@/features/dashboard/hooks';
+import type { DashboardStats } from '@/features/dashboard/types';
+import { AiJobInsight, AiJobInsightSkeleton } from '@/features/jobs/components/ai-job-insight';
+import { JobEmpty, JobNoResults } from '@/features/jobs/components/job-empty';
+import { JobKanban } from '@/features/jobs/components/job-kanban';
 import {
-  JobFilters,
+  JobBoardSkeleton,
+  JobListSkeleton,
+  JobTableSkeleton,
+} from '@/features/jobs/components/job-skeleton';
+import { JobStatistics, JobStatisticsSkeleton } from '@/features/jobs/components/job-statistics';
+import { JobTable } from '@/features/jobs/components/job-table';
+import {
+  JobWorkspaceToolbar,
   type JobsFilterValue,
-} from '@/features/jobs/components/job-filters';
-import { JobList, JobStatusBoard } from '@/features/jobs/components/job-list';
-import { JobListSkeleton } from '@/features/jobs/components/job-skeleton';
+} from '@/features/jobs/components/job-workspace-toolbar';
+import { JobsHeader } from '@/features/jobs/components/jobs-header';
 import { useJobs } from '@/features/jobs/hooks';
 import { ApiError } from '@/lib/api';
 
+const EMPTY_STATS: DashboardStats = {
+  total_jobs: 0,
+  saved: 0,
+  applied: 0,
+  interview: 0,
+  offer: 0,
+  rejected: 0,
+};
+
+/**
+ * Debounce for the search box. The API has no `search` param, so the
+ * filter is applied in memory by `useJobs`; 300ms keeps typing smooth
+ * without a request per keystroke.
+ */
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
 
@@ -28,10 +53,22 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 /**
- * /jobs — "My Jobs" pipeline screen. Status pills filter server-side
- * (GET /jobs?status=); free-text search filters title/company/location
- * client-side (the API exposes no search param). List/board views share
- * the same JobCard; board groups visually by status.
+ * /jobs — the AI Opportunity Workspace.
+ *
+ * Two queries drive this screen and they answer different questions:
+ *   · `useDashboard` → pipeline-wide counts for the statistics row and the
+ *     insight panel. `useJobs` is capped by `per_page`, so counting the
+ *     visible rows would silently under-report a large pipeline.
+ *   · `useJobs`     → the rows themselves, filtered server-side by status
+ *     and in memory by search.
+ *
+ * They are separate TanStack Query caches, and job mutations invalidate
+ * both (see `invalidateJobCaches`), so a status change updates the board,
+ * the table and the statistics without a refetch chain.
+ *
+ * View (list/board) lives in local state rather than the URL: it is a
+ * presentation preference, and keeping it out of the query string means
+ * switching views never remounts the route or refires the jobs request.
  */
 function JobsContent() {
   const [filters, setFilters] = useState<JobsFilterValue>({
@@ -48,11 +85,16 @@ function JobsContent() {
     isError,
     error,
     refetch,
-    data,
   } = useJobs({ status: filters.status, search: debouncedSearch });
 
-  const total = data?.pagination.total ?? jobs.length;
-  const hasActiveFilter = filters.search.trim() !== '' || filters.status !== 'all';
+  const {
+    data: dashboard,
+    isPending: statsPending,
+  } = useDashboard();
+
+  const stats = dashboard?.stats ?? EMPTY_STATS;
+  const hasActiveFilter =
+    filters.search.trim() !== '' || filters.status !== 'all';
 
   const errorMessage =
     error instanceof ApiError
@@ -61,49 +103,74 @@ function JobsContent() {
         ? error.message
         : 'Could not load your jobs.';
 
+  const clearFilters = useMemo(
+    () => () => setFilters((prev) => ({ ...prev, search: '', status: 'all' })),
+    [],
+  );
+
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        eyebrow="JobFlow AI · Jobs"
-        title="My Jobs"
-        description={
-          <>
-            Track every opportunity in one place
-            {total > 0 && (
-              <span className="tabular-nums"> · {total} total</span>
-            )}
-          </>
-        }
+      <JobsHeader total={stats.total_jobs} />
+
+      {statsPending ? (
+        <JobStatisticsSkeleton />
+      ) : (
+        <JobStatistics stats={stats} />
+      )}
+
+      {/*
+        The toolbar stays mounted through loading and error states so the
+        user can always change the filter that produced a bad result.
+      */}
+      <JobWorkspaceToolbar
+        value={filters}
+        onChange={setFilters}
+        resultCount={jobs.length}
       />
 
-      <JobFilters value={filters} onChange={setFilters} />
-
       {isPending ? (
-        <JobListSkeleton />
+        filters.view === 'board' ? (
+          <JobBoardSkeleton />
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2">
+              <JobTableSkeleton />
+              <JobListSkeleton />
+            </div>
+            <AiJobInsightSkeleton />
+          </div>
+        )
       ) : isError ? (
         <ErrorState
           title="Could not load your jobs"
-          description={errorMessage}
+          description={`${errorMessage} Your data is safe — try again in a moment.`}
           action={
             <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCwIcon />
               Try again
             </Button>
           }
         />
       ) : jobs.length === 0 ? (
-        <JobEmpty
-          title={hasActiveFilter ? 'No matching jobs' : 'No jobs yet'}
-          description={
-            hasActiveFilter
-              ? 'No jobs match your current search and filters.'
-              : 'Add your first opportunity and let AI organize it.'
-          }
-          showSearchHint={hasActiveFilter}
-        />
-      ) : filters.view === 'board' ? (
-        <JobStatusBoard jobs={jobs} />
+        hasActiveFilter ? (
+          <JobNoResults onClear={clearFilters} />
+        ) : (
+          <JobEmpty />
+        )
       ) : (
-        <JobList jobs={jobs} />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="min-w-0 lg:col-span-2">
+            {filters.view === 'board' ? (
+              <JobKanban jobs={jobs} />
+            ) : (
+              <JobTable jobs={jobs} />
+            )}
+          </div>
+
+          <FadeIn>
+            <AiJobInsight stats={stats} jobs={jobs} />
+          </FadeIn>
+        </div>
       )}
     </div>
   );

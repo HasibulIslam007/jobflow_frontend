@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { MenuIcon } from 'lucide-react';
 
-import { NotificationButton } from '@/components/layout/notification-button';
+import { NotificationBell } from '@/components/layout/notification-button';
 import { pageTitleFor } from '@/components/layout/sidebar';
 import { UserMenu } from '@/components/layout/user-menu';
 import { GlobalSearch } from '@/components/search/global-search';
@@ -53,7 +53,7 @@ function Topbar({
 
       <div className="ml-auto flex items-center gap-2">
         <GlobalSearch />
-        <NotificationButton />
+        <NotificationBell />
         <UserMenu />
       </div>
     </header>
