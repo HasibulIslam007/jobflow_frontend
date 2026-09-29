@@ -90,9 +90,13 @@ http.interceptors.response.use(
       payload?.meta?.request_id,
     );
 
-    // Session expired while the user was active — let the auth layer decide
-    // (Phase 1 wires this to a redirect + toast instead of a hard reload).
-    if (status === 401 && typeof window !== "undefined") {
+    // `/auth/me` returns 401 for an expected guest session, and login can
+    // return 401 for invalid credentials. Only protected API requests signal
+    // that an already-authenticated session expired.
+    const requestUrl = error.config?.url ?? "";
+    const isAuthRequest = requestUrl.startsWith("/auth/");
+
+    if (status === 401 && !isAuthRequest && typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("jobflow:unauthenticated"));
     }
 

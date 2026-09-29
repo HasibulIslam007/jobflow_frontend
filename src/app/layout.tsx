@@ -5,7 +5,6 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import "./globals.css";
 
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JobFlow AI",
+  title: "JobFlow AI — AI-Powered Job Management",
   description:
-    "AI-powered job application workspace: capture any job post, track deadlines, manage your pipeline.",
+    "Capture, organize, track, and match your job opportunities with AI.",
 };
 
 /**
